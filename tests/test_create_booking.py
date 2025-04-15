@@ -1,6 +1,7 @@
 import allure
 import pytest
 import requests
+from requests import HTTPError
 
 
 @allure.feature('Test Create Booking')
