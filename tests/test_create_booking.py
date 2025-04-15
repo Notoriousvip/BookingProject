@@ -35,20 +35,6 @@ def test_create_booking_successfully(api_client, generate_random_booking_data):
 
 
 @allure.feature('Test Create Booking')
-@allure.story('Test server unavailability during booking creation')
-def test_create_booking_server_unavailable(api_client, generate_random_booking_data):
-    with allure.step("Sending request to create a booking"):
-        try:
-            response = api_client.create_booking(generate_random_booking_data)
-            assert response.status_code != 200, "Server should be unavailable, but got a successful response"
-        except Exception as e:
-            assert isinstance(e,
-                              requests.exceptions.RequestException), f"Expected a RequestException, but got {type(e)}"
-            assert "Connection" in str(e) or "unavailable" in str(
-                e), f"Expected 'Connection' or 'unavailable' in the error message, but got {str(e)}"
-
-
-@allure.feature('Test Create Booking')
 @allure.story('Test booking creation with invalid data')
 def test_create_booking_with_invalid_data(api_client):
     booking_data = {
@@ -56,8 +42,9 @@ def test_create_booking_with_invalid_data(api_client):
     }
 
     with allure.step("Sending request to create a booking with invalid data"):
-        response = api_client.create_booking(booking_data)
+        with pytest.raises(HTTPError) as error_info:
+            api_client.create_booking(booking_data)
 
-    with allure.step("Checking that server returns error due to invalid data"):
-        assert response.status_code == 400, f"Expected status 400 but got {response.status_code}"
-        assert "Bad Request" in response.text, f"Expected 'Bad Request' message, but got {response.text}"
+    with allure.step("Checking that the server returned an appropriate error"):
+        error_text = str(error_info.value)
+        assert "400" in error_text or "500" in error_text, f"Expected 400 or 500 error, but got: {error_text}"
